@@ -2,32 +2,59 @@
 
 API REST em Node.js e Express com persistência no MongoDB e autenticação JWT. Cada tecnologia tem nome, linguagem base e tempo médio para atingir proficiência.
 
-## Rodar localmente
+Interface do catálogo no [repositório do front-end](https://github.com/JefersonRios125/tecnologias_web).
 
-Requisitos: Node.js 24 ou superior e uma instância do MongoDB local ou no Atlas.
+## Rodar os dois projetos juntos
 
-No PowerShell, dentro da pasta do projeto:
+Você precisa do Git, do Node.js 24 ou superior e de um MongoDB local ou no Atlas. Clone os dois repositórios na mesma pasta.
 
 ```powershell
+git clone https://github.com/JefersonRios125/tecnologias_api.git
+git clone https://github.com/JefersonRios125/tecnologias_web.git
+```
+
+### Terminal 1 · API
+
+Na pasta que contém os dois projetos, execute:
+
+```powershell
+cd tecnologias_api
 npm ci
 Copy-Item .env.example .env
 node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"
 ```
 
-No Bash, use `cp .env.example .env` para copiar o arquivo.
+Abra `tecnologias_api/.env` e configure:
 
-Edite o `.env`. Cole o segredo gerado em `JWT_SECRET` e defina uma senha de pelo menos 12 caracteres em `ADMIN_PASSWORD`. Use `ADMIN_USER` e `ADMIN_PASSWORD` para entrar pelo front-end.
+| Variável | Valor ou configuração |
+| --- | --- |
+| `MONGODB_URI` | Para MongoDB local, use `mongodb://127.0.0.1:27017` e deixe o serviço rodando. Para Atlas, use a string de conexão do seu cluster. O usuário do banco precisa ter acesso de leitura e escrita e o seu IP precisa estar autorizado. |
+| `MONGODB_DATABASE` | `catalogo_tecnologias`. O primeiro cadastro cria a coleção `tecnologias` se ela ainda não existir. |
+| `ADMIN_USER` | Usuário do catálogo. O exemplo usa `admin`. |
+| `ADMIN_PASSWORD` | Senha do catálogo, com pelo menos 12 caracteres. |
+| `JWT_SECRET` | Valor gerado pelo comando acima. |
+| `FRONTEND_ORIGIN` | `http://localhost:5173`. Use o endereço exato do front-end, sem barra no final. |
 
-- **MongoDB local** · mantenha `MONGODB_URI=mongodb://127.0.0.1:27017` com o serviço em execução.
-- **MongoDB Atlas** · use a string de conexão do seu cluster em `MONGODB_URI`. O usuário do banco precisa ter acesso de leitura e escrita ao banco e seu IP precisa estar autorizado no Atlas.
-- O banco padrão é `catalogo_tecnologias`. A coleção `tecnologias` é criada no primeiro cadastro.
-- Se mudar o endereço do front-end, atualize `FRONTEND_ORIGIN` com a origem correspondente, sem barra no final.
+Mantenha as credenciais no `.env` local. Inicie a API com `npm start` e mantenha o terminal aberto. Acesse [a rota de teste da API](http://127.0.0.1:3001/health). O retorno `{"status":"ok"}` confirma que ela consegue acessar o MongoDB.
+
+### Terminal 2 · Front-end
+
+Abra outro terminal na pasta que contém os dois projetos e execute:
 
 ```powershell
-npm start
+cd tecnologias_web
+npm ci
+Copy-Item .env.example .env
+npm run dev
 ```
 
-A API roda em `http://127.0.0.1:3001`. A rota `GET /health` responde com `200` quando a API consegue consultar o MongoDB.
+No `tecnologias_web/.env`, o exemplo já define `VITE_API_URL=http://127.0.0.1:3001`. Se a API estiver em outro endereço, ajuste essa variável e reinicie o Vite. Se alterar a origem do front-end, ajuste `FRONTEND_ORIGIN` no `.env` da API e reinicie a API. No Bash, use `cp .env.example .env` no lugar de `Copy-Item .env.example .env`.
+
+### Testar a integração
+
+1. Abra [o catálogo](http://localhost:5173/) e entre com `ADMIN_USER` e `ADMIN_PASSWORD` definidos na API.
+2. Cadastre **Laravel**, base **PHP**, com tempo de **3 meses**. Recarregue a página e confira se o registro continua na tabela. Use **Editar** e **Excluir** para testar o restante do CRUD.
+3. Abra [a rota de tecnologias diretamente](http://127.0.0.1:3001/tecnologias). O retorno `401` é esperado sem o JWT. Após o login, o front-end envia o token automaticamente no cabeçalho `Authorization: Bearer ...`.
 
 ## Rotas
 
@@ -56,5 +83,3 @@ Exemplo de corpo JSON para POST ou PUT:
 ```
 
 O tempo é uma estimativa informada no cadastro. Use um inteiro de 1 a 9999 e uma das unidades `dias`, `semanas`, `meses` ou `anos`. O campo `base` aceita texto como PHP, C#, JavaScript ou TypeScript. Cada registro recebe um ID gerado pelo MongoDB.
-
-O front-end fica no projeto separado `tecnologias-web`. Mantenha as credenciais e o segredo JWT no `.env` da API.
